@@ -442,7 +442,7 @@ async function loadListItems() {
       bereich: extractChoice(f[state.fieldMap['Bereich']] || f.Bereich || f.Sparte),
       link: link,
       weitereInfos: f[state.fieldMap['Weitere Infos']] || f.WeitereInfos || f.field_4 || '',
-      status: extractChoice(f[state.fieldMap['Status']] || f.Status) || 'Neu',
+      status: normalizeStatus(extractChoice(f[state.fieldMap['Status']] || f.Status)) || 'Neu',
       bemerkungen: f[state.fieldMap['Bemerkungen']] || f.Bemerkungen || '',
       _raw: f
     };
@@ -455,6 +455,17 @@ function extractChoice(val) {
   if (Array.isArray(val)) return val[0] || '';
   if (typeof val === 'object') return val.Value || val.value || '';
   return String(val);
+}
+
+function normalizeStatus(s) {
+  if (!s) return 'Neu';
+  const low = String(s).toLowerCase().trim();
+  if (low === 'neu' || low === 'new') return 'Neu';
+  if (low === 'recherchiert' || low === 'recherched' || low === 'researched') return 'Recherchiert';
+  if (low === 'mail bereit' || low === 'mailbereit' || low === 'mail-bereit') return 'Mail bereit';
+  if (low === 'gesendet' || low === 'sent') return 'Gesendet';
+  if (low === 'verloren' || low === 'lost') return 'Verloren';
+  return s; // unknown - leave as is
 }
 
 // ============================================================
