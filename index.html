@@ -706,14 +706,14 @@ function renderPanel() {
 
         ${r.mailEntwurf ? `
           <div class="section-header">Mail-Entwurf</div>
-          ${r.mailBetreff ? `<div class="field-group"><div class="field-label">Betreff</div><input type="text" id="fld_mailBetreff" value="${escapeHtml(r.mailBetreff)}"></div>` : ''}
+          ${r.mailBetreff ? `<div class="field-group"><div class="field-label">Betreff</div><input type="text" id="fld_mailBetreff" value="${escapeHtml(r.mailBetreff)}" oninput="autoSaveMail('${item.listItemId}')"></div>` : ''}
           <div class="field-group">
-            <div class="field-label">Text</div>
-            <textarea id="fld_mailEntwurf" rows="14">${escapeHtml(r.mailEntwurf)}</textarea>
+            <div class="field-label">Text <span style="font-weight:400; color:var(--text-muted);" id="autoSaveIndicator"></span></div>
+            <textarea id="fld_mailEntwurf" rows="14" oninput="autoSaveMail('${item.listItemId}')">${escapeHtml(r.mailEntwurf)}</textarea>
           </div>
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
-            <button class="small" onclick="copyMail()">📋 Kopieren</button>
-            <button class="small secondary" onclick="saveMailDraft('${item.listItemId}')">Mail speichern</button>
+            <button onclick="openInOutlook('${item.listItemId}')">✉ In Outlook öffnen</button>
+            <button class="small secondary" onclick="copyMail()">📋 Kopieren</button>
             <button class="small secondary" onclick="regenerateMail('${item.listItemId}')">↻ Mail neu generieren</button>
           </div>
         ` : ''}
@@ -1108,6 +1108,50 @@ async function saveMailDraft(listItemId) {
   } catch (e) {
     showToast('Speichern fehlgeschlagen', 'error');
   }
+}
+
+// Auto-save debounce timer
+let autoSaveTimer = null;
+function autoSaveMail(listItemId) {
+  const indicator = document.getElementById('autoSaveIndicator');
+  if (indicator) indicator.textContent = '· wird gespeichert...';
+  clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(async () => {
+    const item = state.items.find(i => i.listItemId === listItemId);
+    if (!item || !item.recherche) return;
+    const textEl = document.getElementById('fld_mailEntwurf');
+    const betreffEl = document.getElementById('fld_mailBetreff');
+    if (!textEl) return;
+    item.recherche.mailEntwurf = textEl.value;
+    if (betreffEl) item.recherche.mailBetreff = betreffEl.value;
+    state.rechercheData[listItemId] = item.recherche;
+    try {
+      await saveJsonData();
+      if (indicator) indicator.textContent = '· gespeichert ✓';
+      setTimeout(() => { if (indicator) indicator.textContent = ''; }, 2000);
+    } catch (e) {
+      if (indicator) indicator.textContent = '· Fehler beim Speichern';
+    }
+  }, 1000); // 1 second debounce
+}
+
+function openInOutlook(listItemId) {
+  const item = state.items.find(i => i.listItemId === listItemId);
+  if (!item || !item.recherche) return;
+  const textEl = document.getElementById('fld_mailEntwurf');
+  const betreffEl = document.getElementById('fld_mailBetreff');
+  const body = textEl ? textEl.value : item.recherche.mailEntwurf;
+  const subject = betreffEl ? betreffEl.value : (item.recherche.mailBetreff || '');
+  // Find top contact email
+  const topContact = (item.recherche.priorisierteKontakte || [])[0];
+  const to = topContact && topContact.email ? topContact.email : '';
+  const mailto = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  // Check URL length - mailto has practical limits
+  if (mailto.length > 2000) {
+    showToast('Mail zu lang für direkten Outlook-Aufruf. Bitte "Kopieren" verwenden.', 'error');
+    return;
+  }
+  window.location.href = mailto;
 }
 
 function copyMail() {
