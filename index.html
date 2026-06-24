@@ -1,0 +1,1271 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Akquise Agent v2 — Intelliconcept AG</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #fafaf7;
+    --surface: #ffffff;
+    --border: #e5e3dc;
+    --text: #1a1a1a;
+    --text-muted: #6b6b66;
+    --accent: #2d4a3e;
+    --accent-hover: #1f3329;
+    --neu: #3b6cb3;
+    --recherchiert: #d68a2c;
+    --mailbereit: #d4b03a;
+    --gesendet: #4a8b5c;
+    --verloren: #8b8b85;
+    --danger: #b34141;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .brand { font-size: 18px; font-weight: 600; letter-spacing: -0.01em; }
+  .brand .v { color: var(--text-muted); font-weight: 400; margin-left: 6px; font-size: 13px; }
+  .user-info { display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--text-muted); }
+  .container { max-width: 1400px; margin: 0 auto; padding: 24px; }
+  .login-card {
+    max-width: 480px; margin: 80px auto; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 12px; padding: 40px; text-align: center;
+  }
+  .login-card h1 { font-size: 24px; margin-bottom: 12px; letter-spacing: -0.01em; }
+  .login-card p { color: var(--text-muted); margin-bottom: 24px; }
+  button {
+    background: var(--accent); color: white; border: none; padding: 10px 18px;
+    border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500;
+    transition: background 0.15s; font-family: inherit;
+  }
+  button:hover { background: var(--accent-hover); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  button.secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
+  button.secondary:hover { background: var(--bg); }
+  button.danger { background: var(--danger); }
+  button.danger:hover { background: #8f3434; }
+  button.small { padding: 6px 12px; font-size: 13px; }
+
+  .api-key-bar {
+    background: #fff8e1; border: 1px solid #f0d97a; border-radius: 8px;
+    padding: 12px 16px; margin-bottom: 16px; display: flex; gap: 12px; align-items: center;
+  }
+  .api-key-bar.ok { background: #e8f3ec; border-color: #a3c7af; }
+  .api-key-bar input {
+    flex: 1; padding: 8px 12px; border: 1px solid var(--border);
+    border-radius: 6px; font-family: monospace; font-size: 12px;
+  }
+
+  .stats-bar {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px;
+    margin-bottom: 16px;
+  }
+  .stat-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 14px 16px;
+  }
+  .stat-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .stat-value { font-size: 24px; font-weight: 600; margin-top: 4px; }
+
+  .toolbar {
+    display: flex; gap: 12px; align-items: center; margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .toolbar input.search {
+    flex: 1; min-width: 200px; padding: 8px 12px;
+    border: 1px solid var(--border); border-radius: 6px;
+    font-family: inherit; font-size: 14px; background: var(--surface);
+  }
+
+  .tabs {
+    display: flex; gap: 4px; margin-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .tab {
+    padding: 10px 16px; cursor: pointer; border-bottom: 2px solid transparent;
+    font-size: 14px; color: var(--text-muted); font-weight: 500;
+    transition: all 0.15s;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab .count {
+    background: var(--bg); border-radius: 10px; padding: 1px 8px;
+    font-size: 12px; margin-left: 6px;
+  }
+  .tab.active .count { background: var(--accent); color: white; }
+
+  .layout {
+    display: grid; grid-template-columns: 1fr; gap: 16px;
+  }
+  .layout.with-panel { grid-template-columns: 1fr 480px; }
+
+  table {
+    width: 100%; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; border-collapse: separate; border-spacing: 0; overflow: hidden;
+  }
+  th, td {
+    padding: 12px 14px; text-align: left; border-bottom: 1px solid var(--border);
+    font-size: 13px; vertical-align: middle;
+  }
+  th { background: var(--bg); font-weight: 600; font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  tr:last-child td { border-bottom: none; }
+  tr.row:hover { background: var(--bg); cursor: pointer; }
+  tr.row.selected { background: #f1ede4; }
+
+  .status-badge {
+    display: inline-block; padding: 3px 10px; border-radius: 12px;
+    font-size: 12px; font-weight: 500; color: white;
+  }
+  .status-badge.neu { background: var(--neu); }
+  .status-badge.recherchiert { background: var(--recherchiert); }
+  .status-badge.mailbereit { background: var(--mailbereit); color: #5c4a00; }
+  .status-badge.gesendet { background: var(--gesendet); }
+  .status-badge.verloren { background: var(--verloren); }
+
+  .bereich-tag {
+    display: inline-block; padding: 2px 8px; border-radius: 4px;
+    font-size: 12px; background: var(--bg); border: 1px solid var(--border);
+  }
+  .link-cell a { color: var(--accent); text-decoration: none; font-size: 12px; }
+  .link-cell a:hover { text-decoration: underline; }
+
+  /* Detail Panel */
+  .panel {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 20px; max-height: calc(100vh - 200px);
+    overflow-y: auto; position: sticky; top: 90px;
+  }
+  .panel h2 { font-size: 18px; margin-bottom: 4px; letter-spacing: -0.01em; }
+  .panel .sub { color: var(--text-muted); font-size: 13px; margin-bottom: 16px; }
+  .panel-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+
+  .field-group { margin-bottom: 16px; }
+  .field-label {
+    font-size: 12px; color: var(--text-muted); text-transform: uppercase;
+    letter-spacing: 0.04em; margin-bottom: 4px; font-weight: 600;
+  }
+  .field-value { font-size: 14px; }
+  .field-value.empty { color: var(--text-muted); font-style: italic; }
+
+  textarea, input[type="text"] {
+    width: 100%; padding: 8px 12px; border: 1px solid var(--border);
+    border-radius: 6px; font-family: inherit; font-size: 13px; resize: vertical;
+    background: var(--surface);
+  }
+  textarea { min-height: 80px; }
+
+  .section-header {
+    font-size: 13px; font-weight: 600; margin: 20px 0 8px 0;
+    padding-bottom: 6px; border-bottom: 1px solid var(--border);
+    color: var(--accent);
+  }
+
+  .partner-card {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 6px; padding: 12px; margin-bottom: 8px;
+  }
+  .partner-name { font-weight: 600; font-size: 14px; }
+  .partner-role { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
+  .partner-contact {
+    font-size: 12px; padding: 4px 0; border-top: 1px dashed var(--border);
+    margin-top: 6px;
+  }
+  .partner-contact:first-of-type { border-top: none; margin-top: 0; }
+  .partner-contact .name { font-weight: 500; }
+  .partner-contact .func { color: var(--text-muted); }
+  .partner-contact a { color: var(--accent); text-decoration: none; }
+  .partner-contact a:hover { text-decoration: underline; }
+  .priority-high { border-left: 3px solid var(--danger); padding-left: 8px; }
+  .priority-medium { border-left: 3px solid var(--mailbereit); padding-left: 8px; }
+  .priority-low { border-left: 3px solid var(--verloren); padding-left: 8px; }
+
+  .chance-bar {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--bg); padding: 10px 14px; border-radius: 6px;
+  }
+  .chance-score {
+    font-size: 24px; font-weight: 600; min-width: 50px;
+  }
+  .chance-detail { font-size: 12px; color: var(--text-muted); flex: 1; }
+
+  .toast {
+    position: fixed; bottom: 24px; right: 24px; background: var(--text);
+    color: white; padding: 12px 18px; border-radius: 8px; font-size: 14px;
+    z-index: 1000; max-width: 400px;
+  }
+  .toast.error { background: var(--danger); }
+  .toast.success { background: var(--gesendet); }
+
+  .spinner {
+    display: inline-block; width: 14px; height: 14px;
+    border: 2px solid var(--border); border-top-color: var(--accent);
+    border-radius: 50%; animation: spin 0.8s linear infinite;
+    vertical-align: middle; margin-right: 6px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .empty-state {
+    text-align: center; padding: 60px 20px; color: var(--text-muted);
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+
+  .progress {
+    position: fixed; top: 60px; left: 0; right: 0; background: var(--accent);
+    color: white; padding: 10px 24px; text-align: center; font-size: 14px;
+    z-index: 99;
+  }
+
+  /* Mobile */
+  @media (max-width: 900px) {
+    .layout.with-panel { grid-template-columns: 1fr; }
+    .stats-bar { grid-template-columns: repeat(2, 1fr); }
+    th.hide-mobile, td.hide-mobile { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">Akquise Agent <span class="v">v2 · Intelliconcept AG</span></div>
+  <div class="user-info" id="userInfo"></div>
+</header>
+
+<div id="app">
+  <!-- Login screen -->
+  <div class="container" id="loginScreen">
+    <div class="login-card">
+      <h1>Anmelden</h1>
+      <p>Mit deinem Microsoft-Konto fortfahren.</p>
+      <button onclick="login()">Mit Microsoft anmelden</button>
+    </div>
+  </div>
+
+  <!-- Main app (hidden until logged in) -->
+  <div class="container" id="mainApp" style="display:none;">
+
+    <div class="api-key-bar" id="apiKeyBar">
+      <span>🔑 Anthropic API-Key:</span>
+      <input type="password" id="apiKeyInput" placeholder="sk-ant-...">
+      <button class="small" onclick="saveApiKey()">Speichern</button>
+    </div>
+
+    <div class="stats-bar">
+      <div class="stat-card"><div class="stat-label">Total</div><div class="stat-value" id="statTotal">0</div></div>
+      <div class="stat-card"><div class="stat-label">Neu</div><div class="stat-value" id="statNeu" style="color:var(--neu)">0</div></div>
+      <div class="stat-card"><div class="stat-label">Recherchiert</div><div class="stat-value" id="statRecherchiert" style="color:var(--recherchiert)">0</div></div>
+      <div class="stat-card"><div class="stat-label">Mail bereit</div><div class="stat-value" id="statMailbereit" style="color:var(--mailbereit)">0</div></div>
+      <div class="stat-card"><div class="stat-label">Gesendet</div><div class="stat-value" id="statGesendet" style="color:var(--gesendet)">0</div></div>
+    </div>
+
+    <div class="toolbar">
+      <input class="search" id="searchInput" placeholder="Suchen nach Titel, Bauherr, Kontakt..." oninput="render()">
+      <button class="secondary small" onclick="loadAll()">↻ Neu laden</button>
+      <button onclick="processAllNew()">▶ Alle "Neu" verarbeiten</button>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" data-tab="neu" onclick="switchTab('neu')">Neu <span class="count" id="cntNeu">0</span></div>
+      <div class="tab" data-tab="recherchiert" onclick="switchTab('recherchiert')">Recherchiert <span class="count" id="cntRecherchiert">0</span></div>
+      <div class="tab" data-tab="mailbereit" onclick="switchTab('mailbereit')">Mail bereit <span class="count" id="cntMailbereit">0</span></div>
+      <div class="tab" data-tab="gesendet" onclick="switchTab('gesendet')">Gesendet <span class="count" id="cntGesendet">0</span></div>
+      <div class="tab" data-tab="verloren" onclick="switchTab('verloren')">Verloren <span class="count" id="cntVerloren">0</span></div>
+    </div>
+
+    <div class="layout" id="layout">
+      <div id="tableContainer"></div>
+      <div id="panelContainer" style="display:none;"></div>
+    </div>
+
+  </div>
+</div>
+
+<div id="toastContainer"></div>
+<div id="progressBar" style="display:none;"></div>
+
+<script>
+// ============================================================
+// CONFIG
+// ============================================================
+const CONFIG = {
+  clientId: 'e8c54549-b383-4679-9a98-76cf407cecb2',
+  tenantId: '22a42ae4-5a93-405f-8de7-151c8648bd24',
+  redirectUri: 'https://thorstenmolinari-creator.github.io/akquise-agent-v2/',
+  scopes: 'Sites.Read.All Sites.ReadWrite.All User.Read Files.ReadWrite',
+  listSiteUrl: 'https://intelliconceptag-my.sharepoint.com/personal/thorsten_molinari_intelliconcept_ch',
+  listName: 'Akquise Claude',
+  jsonFileName: 'akquise-data.json'
+};
+
+// ============================================================
+// STATE
+// ============================================================
+const state = {
+  token: null,
+  user: null,
+  siteId: null,
+  listId: null,
+  driveId: null,
+  fieldMap: {}, // display name -> internal name
+  items: [],    // merged MS Lists + JSON
+  rechercheData: {}, // keyed by listItemId
+  currentTab: 'neu',
+  selectedId: null,
+  apiKey: null,
+  processing: false
+};
+
+// ============================================================
+// AUTH
+// ============================================================
+function login() {
+  const url = `https://login.microsoftonline.com/${CONFIG.tenantId}/oauth2/v2.0/authorize?` +
+    `client_id=${CONFIG.clientId}` +
+    `&response_type=token` +
+    `&redirect_uri=${encodeURIComponent(CONFIG.redirectUri)}` +
+    `&scope=${encodeURIComponent(CONFIG.scopes)}` +
+    `&response_mode=fragment`;
+  window.location.href = url;
+}
+
+function logout() {
+  localStorage.removeItem('akquise_token');
+  localStorage.removeItem('akquise_token_expiry');
+  window.location.href = `https://login.microsoftonline.com/${CONFIG.tenantId}/oauth2/v2.0/logout?post_logout_redirect_uri=${encodeURIComponent(CONFIG.redirectUri)}`;
+}
+
+function parseTokenFromHash() {
+  if (!window.location.hash) return null;
+  const params = new URLSearchParams(window.location.hash.substring(1));
+  const token = params.get('access_token');
+  const expiresIn = parseInt(params.get('expires_in') || '3600');
+  if (token) {
+    const expiry = Date.now() + expiresIn * 1000;
+    localStorage.setItem('akquise_token', token);
+    localStorage.setItem('akquise_token_expiry', expiry.toString());
+    window.history.replaceState({}, document.title, window.location.pathname);
+    return token;
+  }
+  return null;
+}
+
+function getStoredToken() {
+  const token = localStorage.getItem('akquise_token');
+  const expiry = parseInt(localStorage.getItem('akquise_token_expiry') || '0');
+  if (token && expiry > Date.now() + 60000) return token;
+  return null;
+}
+
+// ============================================================
+// GRAPH API HELPERS
+// ============================================================
+async function gf(path, opts = {}) {
+  const url = path.startsWith('http') ? path : `https://graph.microsoft.com/v1.0${path}`;
+  const res = await fetch(url, {
+    ...opts,
+    headers: {
+      'Authorization': `Bearer ${state.token}`,
+      'Content-Type': 'application/json',
+      ...(opts.headers || {})
+    }
+  });
+  if (!res.ok) {
+    const txt = await res.text();
+    throw new Error(`Graph API ${res.status}: ${txt}`);
+  }
+  const ct = res.headers.get('content-type') || '';
+  if (ct.includes('json')) return res.json();
+  return res.text();
+}
+
+async function getUserInfo() {
+  const me = await gf('/me');
+  state.user = me;
+  document.getElementById('userInfo').innerHTML =
+    `${me.displayName} <button class="secondary small" onclick="logout()">Abmelden</button>`;
+}
+
+async function getSiteId() {
+  // Format: hostname:/personal/...
+  const u = new URL(CONFIG.listSiteUrl);
+  const path = u.pathname; // /personal/thorsten_molinari_intelliconcept_ch
+  const site = await gf(`/sites/${u.hostname}:${path}`);
+  state.siteId = site.id;
+  return site.id;
+}
+
+async function getListId() {
+  const lists = await gf(`/sites/${state.siteId}/lists?$filter=displayName eq '${CONFIG.listName}'`);
+  if (!lists.value || !lists.value.length) throw new Error(`Liste "${CONFIG.listName}" nicht gefunden`);
+  state.listId = lists.value[0].id;
+  return state.listId;
+}
+
+async function getFieldMap() {
+  const cols = await gf(`/sites/${state.siteId}/lists/${state.listId}/columns`);
+  const map = {};
+  for (const c of cols.value) {
+    if (!c.readOnly && !c.hidden) {
+      map[c.displayName] = c.name;
+      map[c.name] = c.name; // also allow direct internal name
+    }
+  }
+  state.fieldMap = map;
+  return map;
+}
+
+async function loadListItems() {
+  const data = await gf(`/sites/${state.siteId}/lists/${state.listId}/items?expand=fields&$top=999`);
+  return data.value.map(item => {
+    const f = item.fields || {};
+    const linkRaw = f[state.fieldMap['Link']] || f.Link || null;
+    const link = (typeof linkRaw === 'object' && linkRaw) ? linkRaw.Url : (linkRaw || '');
+    return {
+      listItemId: item.id,
+      titel: f[state.fieldMap['Titel']] || f.Title || '(ohne Titel)',
+      bereich: extractChoice(f[state.fieldMap['Bereich']] || f.Bereich || f.Sparte),
+      link: link,
+      weitereInfos: f[state.fieldMap['Weitere Infos']] || f.WeitereInfos || f.field_4 || '',
+      status: extractChoice(f[state.fieldMap['Status']] || f.Status) || 'Neu',
+      bemerkungen: f[state.fieldMap['Bemerkungen']] || f.Bemerkungen || '',
+      _raw: f
+    };
+  });
+}
+
+function extractChoice(val) {
+  if (!val) return '';
+  if (typeof val === 'string') return val;
+  if (Array.isArray(val)) return val[0] || '';
+  if (typeof val === 'object') return val.Value || val.value || '';
+  return String(val);
+}
+
+// ============================================================
+// ONEDRIVE JSON STORAGE
+// ============================================================
+async function loadJsonData() {
+  try {
+    const file = await gf(`/me/drive/root:/${CONFIG.jsonFileName}:/content`);
+    state.rechercheData = file || {};
+    return state.rechercheData;
+  } catch (e) {
+    if (e.message.includes('404')) {
+      // File doesn't exist yet - create empty
+      state.rechercheData = {};
+      await saveJsonData();
+      return {};
+    }
+    throw e;
+  }
+}
+
+async function saveJsonData() {
+  const res = await fetch(`https://graph.microsoft.com/v1.0/me/drive/root:/${CONFIG.jsonFileName}:/content`, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `Bearer ${state.token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(state.rechercheData, null, 2)
+  });
+  if (!res.ok) {
+    const txt = await res.text();
+    throw new Error(`OneDrive save failed: ${res.status} ${txt}`);
+  }
+}
+
+// ============================================================
+// MERGE & LOAD
+// ============================================================
+async function loadAll() {
+  showToast('Lade Daten...');
+  try {
+    if (!state.siteId) await getSiteId();
+    if (!state.listId) await getListId();
+    if (!Object.keys(state.fieldMap).length) await getFieldMap();
+    const [listItems, _] = await Promise.all([
+      loadListItems(),
+      loadJsonData()
+    ]);
+    // Merge: List item + recherche data
+    state.items = listItems.map(item => {
+      const recherche = state.rechercheData[item.listItemId] || {};
+      return { ...item, recherche };
+    });
+    render();
+    showToast(`${state.items.length} Einträge geladen`, 'success');
+  } catch (e) {
+    console.error(e);
+    showToast('Fehler: ' + e.message, 'error');
+  }
+}
+
+// ============================================================
+// RENDERING
+// ============================================================
+function render() {
+  updateStats();
+  renderTable();
+  if (state.selectedId) renderPanel();
+}
+
+function updateStats() {
+  const counts = { Neu: 0, Recherchiert: 0, 'Mail bereit': 0, Gesendet: 0, Verloren: 0 };
+  for (const it of state.items) counts[it.status] = (counts[it.status] || 0) + 1;
+  document.getElementById('statTotal').textContent = state.items.length;
+  document.getElementById('statNeu').textContent = counts['Neu'] || 0;
+  document.getElementById('statRecherchiert').textContent = counts['Recherchiert'] || 0;
+  document.getElementById('statMailbereit').textContent = counts['Mail bereit'] || 0;
+  document.getElementById('statGesendet').textContent = counts['Gesendet'] || 0;
+  document.getElementById('cntNeu').textContent = counts['Neu'] || 0;
+  document.getElementById('cntRecherchiert').textContent = counts['Recherchiert'] || 0;
+  document.getElementById('cntMailbereit').textContent = counts['Mail bereit'] || 0;
+  document.getElementById('cntGesendet').textContent = counts['Gesendet'] || 0;
+  document.getElementById('cntVerloren').textContent = counts['Verloren'] || 0;
+}
+
+function filteredItems() {
+  const tabMap = {
+    'neu': 'Neu',
+    'recherchiert': 'Recherchiert',
+    'mailbereit': 'Mail bereit',
+    'gesendet': 'Gesendet',
+    'verloren': 'Verloren'
+  };
+  const target = tabMap[state.currentTab];
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  return state.items.filter(it => {
+    if (it.status !== target) return false;
+    if (!search) return true;
+    const blob = JSON.stringify(it).toLowerCase();
+    return blob.includes(search);
+  });
+}
+
+function renderTable() {
+  const items = filteredItems();
+  const container = document.getElementById('tableContainer');
+  if (!items.length) {
+    container.innerHTML = `<div class="empty-state">Keine Einträge in diesem Status</div>`;
+    return;
+  }
+  const rows = items.map(it => {
+    const r = it.recherche || {};
+    const topContact = (r.priorisierteKontakte || [])[0];
+    const linkShort = it.link ? (it.link.length > 35 ? it.link.substring(0, 35) + '…' : it.link) : '';
+    return `
+      <tr class="row ${state.selectedId === it.listItemId ? 'selected' : ''}" data-id="${it.listItemId}">
+        <td><span class="status-badge ${statusClass(it.status)}">${it.status}</span></td>
+        <td><strong>${escapeHtml(it.titel)}</strong></td>
+        <td>${it.bereich ? `<span class="bereich-tag">${it.bereich}</span>` : '—'}</td>
+        <td class="hide-mobile link-cell">${it.link ? `<a href="${escapeHtml(it.link)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${escapeHtml(linkShort)}</a>` : '—'}</td>
+        <td class="hide-mobile">${topContact ? escapeHtml(topContact.name || '—') : '—'}</td>
+        <td class="hide-mobile">${r.chance ? `<strong>${r.chance}/10</strong>` : '—'}</td>
+      </tr>
+    `;
+  }).join('');
+  container.innerHTML = `
+    <table>
+      <thead><tr>
+        <th>Status</th><th>Titel</th><th>Bereich</th>
+        <th class="hide-mobile">Link</th><th class="hide-mobile">Top-Kontakt</th>
+        <th class="hide-mobile">Chance</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+  container.querySelectorAll('tr.row').forEach(tr => {
+    tr.addEventListener('click', () => selectItem(tr.dataset.id));
+  });
+}
+
+function statusClass(s) {
+  return { 'Neu': 'neu', 'Recherchiert': 'recherchiert', 'Mail bereit': 'mailbereit', 'Gesendet': 'gesendet', 'Verloren': 'verloren' }[s] || 'neu';
+}
+
+function selectItem(id) {
+  state.selectedId = id;
+  document.getElementById('layout').classList.add('with-panel');
+  document.getElementById('panelContainer').style.display = 'block';
+  render();
+}
+
+function closePanel() {
+  state.selectedId = null;
+  document.getElementById('layout').classList.remove('with-panel');
+  document.getElementById('panelContainer').style.display = 'none';
+  render();
+}
+
+function renderPanel() {
+  const item = state.items.find(i => i.listItemId === state.selectedId);
+  if (!item) return;
+  const r = item.recherche || {};
+  const panel = document.getElementById('panelContainer');
+
+  panel.innerHTML = `
+    <div class="panel">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+        <div>
+          <h2>${escapeHtml(item.titel)}</h2>
+          <div class="sub">
+            <span class="status-badge ${statusClass(item.status)}">${item.status}</span>
+            ${item.bereich ? `<span class="bereich-tag" style="margin-left:6px;">${item.bereich}</span>` : ''}
+          </div>
+        </div>
+        <button class="secondary small" onclick="closePanel()">✕</button>
+      </div>
+
+      <div class="panel-actions">
+        <button onclick="researchItem('${item.listItemId}')">${item.status === 'Neu' ? '🔍 Recherchieren' : '↻ Neu recherchieren'}</button>
+        <button class="secondary small" onclick="resetStatus('${item.listItemId}')">↺ Auf "Neu"</button>
+        <button class="secondary small" onclick="markSent('${item.listItemId}')">✓ Gesendet</button>
+        <button class="danger small" onclick="markLost('${item.listItemId}')">✗ Verloren</button>
+      </div>
+
+      ${item.link ? `<div class="field-group"><div class="field-label">Link</div><div><a href="${escapeHtml(item.link)}" target="_blank" rel="noopener" style="color:var(--accent);">${escapeHtml(item.link)}</a></div></div>` : ''}
+
+      <div class="field-group">
+        <div class="field-label">Weitere Infos (Eingabe)</div>
+        <textarea id="fld_weitereInfos" rows="2">${escapeHtml(item.weitereInfos || '')}</textarea>
+      </div>
+
+      <div class="field-group">
+        <div class="field-label">Bemerkungen</div>
+        <textarea id="fld_bemerkungen" rows="2" placeholder="Rückmeldungen vom Kunden, interne Notizen...">${escapeHtml(item.bemerkungen || '')}</textarea>
+      </div>
+
+      <button class="small" onclick="saveListFields('${item.listItemId}')">Eingaben speichern</button>
+
+      ${r.recherchiertAm ? `
+        <div class="section-header">Recherche-Ergebnisse</div>
+
+        ${r.chance ? `
+          <div class="chance-bar">
+            <div class="chance-score">${r.chance}/10</div>
+            <div class="chance-detail">${escapeHtml(r.chanceBegruendung || '')}</div>
+          </div>
+        ` : ''}
+
+        ${r.avRelevanz ? `
+          <div class="field-group" style="margin-top:12px;">
+            <div class="field-label">AV-Relevanz</div>
+            <div class="field-value">${escapeHtml(r.avRelevanz)}</div>
+          </div>
+        ` : ''}
+
+        ${r.zusammenfassung ? `
+          <div class="field-group">
+            <div class="field-label">Zusammenfassung</div>
+            <div class="field-value">${escapeHtml(r.zusammenfassung)}</div>
+          </div>
+        ` : ''}
+
+        ${renderPartnerSection('Bauherr', r.bauherr)}
+        ${renderPartnerSection('Architekt', r.architekt)}
+        ${renderPartnerSection('Generalplaner', r.generalplaner)}
+        ${renderPartnerSection('Elektroplaner', r.elektroplaner)}
+        ${r.weiterePlaner ? `<div class="field-group"><div class="field-label">Weitere Planer</div><div class="field-value">${escapeHtml(r.weiterePlaner)}</div></div>` : ''}
+
+        ${renderPriorisierteKontakte(r.priorisierteKontakte)}
+
+        ${r.rechercheNotizen ? `
+          <div class="field-group">
+            <div class="field-label">Recherche-Notizen</div>
+            <div class="field-value" style="white-space:pre-wrap; background:var(--bg); padding:10px; border-radius:6px; font-size:12px;">${escapeHtml(r.rechercheNotizen)}</div>
+          </div>
+        ` : ''}
+
+        ${r.mailEntwurf ? `
+          <div class="section-header">Mail-Entwurf</div>
+          ${r.mailBetreff ? `<div class="field-group"><div class="field-label">Betreff</div><input type="text" id="fld_mailBetreff" value="${escapeHtml(r.mailBetreff)}"></div>` : ''}
+          <div class="field-group">
+            <div class="field-label">Text</div>
+            <textarea id="fld_mailEntwurf" rows="14">${escapeHtml(r.mailEntwurf)}</textarea>
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="small" onclick="copyMail()">📋 Kopieren</button>
+            <button class="small secondary" onclick="saveMailDraft('${item.listItemId}')">Mail speichern</button>
+            <button class="small secondary" onclick="regenerateMail('${item.listItemId}')">↻ Mail neu generieren</button>
+          </div>
+        ` : ''}
+
+        <div style="margin-top:16px; color:var(--text-muted); font-size:11px;">
+          Recherchiert am: ${new Date(r.recherchiertAm).toLocaleString('de-CH')}
+        </div>
+      ` : `
+        <div class="section-header">Recherche</div>
+        <p style="color:var(--text-muted); font-size:13px;">Noch keine Recherche durchgeführt.</p>
+      `}
+    </div>
+  `;
+}
+
+function renderPartnerSection(label, data) {
+  if (!data || (!data.firma && !(data.kontakte && data.kontakte.length))) return '';
+  return `
+    <div class="field-group">
+      <div class="field-label">${label}</div>
+      <div class="partner-card">
+        ${data.firma ? `<div class="partner-name">${escapeHtml(data.firma)}</div>` : ''}
+        ${data.adresse ? `<div class="partner-role">${escapeHtml(data.adresse)}</div>` : ''}
+        ${data.website ? `<div class="partner-role"><a href="${escapeHtml(data.website)}" target="_blank" rel="noopener">${escapeHtml(data.website)}</a></div>` : ''}
+        ${(data.kontakte || []).map(k => renderKontakt(k)).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function renderKontakt(k) {
+  if (!k.name) return '';
+  return `
+    <div class="partner-contact">
+      <div><span class="name">${escapeHtml(k.name)}</span> ${k.funktion ? `<span class="func">— ${escapeHtml(k.funktion)}</span>` : ''}</div>
+      ${k.email ? `<div>✉ <a href="mailto:${escapeHtml(k.email)}">${escapeHtml(k.email)}</a></div>` : ''}
+      ${k.telefon ? `<div>☎ ${escapeHtml(k.telefon)}</div>` : ''}
+      ${k.linkedin ? `<div>🔗 <a href="${escapeHtml(k.linkedin)}" target="_blank" rel="noopener">LinkedIn</a></div>` : ''}
+    </div>
+  `;
+}
+
+function renderPriorisierteKontakte(kontakte) {
+  if (!kontakte || !kontakte.length) return '';
+  return `
+    <div class="section-header">Priorisierte Kontakte (für Akquise)</div>
+    ${kontakte.map(k => {
+      const prio = (k.prioritaet || 'mittel').toLowerCase();
+      const prioClass = prio === 'hoch' ? 'priority-high' : prio === 'niedrig' ? 'priority-low' : 'priority-medium';
+      return `
+        <div class="partner-card ${prioClass}">
+          <div class="partner-name">${escapeHtml(k.name || '—')} <span style="font-size:11px; color:var(--text-muted); font-weight:400;">[${escapeHtml(k.prioritaet || 'mittel')}]</span></div>
+          <div class="partner-role">${escapeHtml(k.funktion || '')} ${k.firma ? `· ${escapeHtml(k.firma)}` : ''}</div>
+          ${k.email ? `<div style="font-size:12px; margin-top:4px;">✉ <a href="mailto:${escapeHtml(k.email)}" style="color:var(--accent);">${escapeHtml(k.email)}</a></div>` : ''}
+          ${k.telefon ? `<div style="font-size:12px;">☎ ${escapeHtml(k.telefon)}</div>` : ''}
+          ${k.begruendung ? `<div style="font-size:12px; color:var(--text-muted); margin-top:6px; font-style:italic;">${escapeHtml(k.begruendung)}</div>` : ''}
+        </div>
+      `;
+    }).join('')}
+  `;
+}
+
+// ============================================================
+// TAB SWITCH
+// ============================================================
+function switchTab(tab) {
+  state.currentTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  state.selectedId = null;
+  closePanel();
+}
+
+// ============================================================
+// RESEARCH (Anthropic API)
+// ============================================================
+async function researchItem(listItemId) {
+  if (!state.apiKey) {
+    showToast('Bitte zuerst API-Key eingeben', 'error');
+    return;
+  }
+  const item = state.items.find(i => i.listItemId === listItemId);
+  if (!item) return;
+
+  showToast(`<span class="spinner"></span> Recherchiere "${item.titel}"...`);
+
+  try {
+    const prompt = buildResearchPrompt(item);
+    const response = await callClaude(prompt);
+    const data = parseResearchResponse(response);
+    data.recherchiertAm = new Date().toISOString();
+
+    // Save to state + JSON
+    state.rechercheData[listItemId] = data;
+    item.recherche = data;
+    await saveJsonData();
+
+    // Update status in MS Lists
+    const newStatus = data.mailEntwurf ? 'Mail bereit' : 'Recherchiert';
+    item.status = newStatus;
+    await updateListStatus(listItemId, newStatus);
+
+    render();
+    if (state.selectedId === listItemId) renderPanel();
+    showToast(`✓ "${item.titel}" recherchiert`, 'success');
+  } catch (e) {
+    console.error(e);
+    showToast('Fehler: ' + e.message, 'error');
+  }
+}
+
+async function regenerateMail(listItemId) {
+  const item = state.items.find(i => i.listItemId === listItemId);
+  if (!item || !item.recherche) return;
+  showToast(`<span class="spinner"></span> Generiere Mail neu...`);
+  try {
+    const mailData = await generateMailOnly(item);
+    item.recherche.mailEntwurf = mailData.text;
+    item.recherche.mailBetreff = mailData.betreff;
+    state.rechercheData[listItemId] = item.recherche;
+    await saveJsonData();
+    if (item.status === 'Recherchiert') {
+      item.status = 'Mail bereit';
+      await updateListStatus(listItemId, 'Mail bereit');
+    }
+    renderPanel();
+    render();
+    showToast('✓ Mail-Entwurf erstellt', 'success');
+  } catch (e) {
+    showToast('Fehler: ' + e.message, 'error');
+  }
+}
+
+function buildResearchPrompt(item) {
+  const sparteContext = {
+    'Kontrollraum': 'Leitstellen, Kontrollräume, Operation Center, Videowalls, KVM-Systeme, Visualisierungssysteme',
+    'Corporate AV': 'Konferenzräume, Sitzungszimmer, Auditorien, Aulas, Digital Signage, hybride Meetingräume, Empfangsbereiche',
+    'Bildung': 'Seminarräume, Hörsäle, Auditorien, Aulas, Schulungsräume, Laborräume, hybride Lehrformate, Klassenzimmer'
+  };
+
+  return `Du bist Akquise-Recherche-Assistent für die Intelliconcept AG, ein Schweizer AV-Fachplanungsbüro in Rotkreuz (Kontrollraum, Corporate AV, Bildung).
+
+PROJEKT:
+Titel: ${item.titel}
+Bereich (Sparte): ${item.bereich || 'unbekannt'}
+Link: ${item.link || '—'}
+Weitere Infos: ${item.weitereInfos || '—'}
+
+AV-Fokus für Sparte "${item.bereich}": ${sparteContext[item.bereich] || 'Audiovisuelle Systeme allgemein'}
+
+AUFGABE:
+Recherchiere dieses Bauprojekt gründlich im Web. Identifiziere:
+1. Bauherr (Auftraggeber)
+2. Architekt
+3. Generalplaner (falls vorhanden)
+4. Elektroplaner / HLKSE-Planer (falls vorhanden)
+5. Weitere Fachplaner
+
+Finde für JEDE dieser Firmen mindestens 1-3 KONKRETE Kontaktpersonen mit Namen, Funktion, E-Mail, Telefon (LinkedIn falls möglich).
+
+Erstelle dann eine PRIORISIERTE Liste der 3-5 wichtigsten Kontakte, die Thorsten Molinari (CEO Intelliconcept) für die AV-Akquise anschreiben sollte. Berücksichtige dabei:
+- Bei "Corporate AV" und "Bildung": Architekt und Generalplaner haben oft Vorrang
+- Bei "Kontrollraum": Bauherr und Elektroplaner haben oft Vorrang
+- Geschäftsleitung > Projektleitung > Sachbearbeitung
+
+Bewerte die AV-Chance des Projekts auf einer Skala 1-10 mit Begründung.
+
+ANTWORT NUR ALS JSON in EXAKT diesem Format (kein Markdown, kein Text drumherum):
+{
+  "zusammenfassung": "1-2 Sätze Kurz-Übersicht zum Projekt",
+  "avRelevanz": "Welche AV-Bereiche sind im Projekt relevant (z.B. Sitzungszimmer, Auditorium, Digital Signage)",
+  "chance": 7,
+  "chanceBegruendung": "Warum diese Bewertung",
+  "bauherr": {
+    "firma": "Firmenname",
+    "adresse": "Strasse, PLZ Ort",
+    "website": "https://...",
+    "kontakte": [
+      {"name": "Vorname Nachname", "funktion": "Position", "email": "...", "telefon": "...", "linkedin": "..."}
+    ]
+  },
+  "architekt": { "firma": "...", "adresse": "...", "website": "...", "kontakte": [...] },
+  "generalplaner": { "firma": "...", "adresse": "...", "website": "...", "kontakte": [...] },
+  "elektroplaner": { "firma": "...", "adresse": "...", "website": "...", "kontakte": [...] },
+  "weiterePlaner": "Freitext mit weiteren Planern falls vorhanden",
+  "priorisierteKontakte": [
+    {"name": "...", "funktion": "...", "firma": "...", "email": "...", "telefon": "...", "prioritaet": "Hoch", "begruendung": "Warum wichtig"}
+  ],
+  "rechercheNotizen": "Ausführliche Notizen, Fakten, Stand des Projekts, alles Wichtige",
+  "mailEntwurf": "${getMailVorlageText(item.bereich)}",
+  "mailBetreff": "AV-Fachplanung Neubau ${item.titel}"
+}
+
+WICHTIG für mailEntwurf: Erstelle einen Mail-Entwurf basierend auf der folgenden Vorlage für die Sparte "${item.bereich}". Personalisiere die Anrede mit dem TOP-PRIORISIERTEN Kontakt (höchste Priorität). Schliesse mit "Liebe Grüsse" oder "Freundliche Grüsse" — KEINE Signatur, KEIN Name am Ende.
+
+VORLAGE für ${item.bereich}:
+${getMailVorlage(item.bereich)}
+
+Wenn du KEINEN Kontakt mit E-Mail-Adresse findest, setze mailEntwurf auf leeren String "".
+
+Suche jetzt aktiv im Web und antworte NUR mit dem JSON.`;
+}
+
+function getMailVorlage(bereich) {
+  if (bereich === 'Kontrollraum') {
+    return `Sehr geehrte/r Herr/Frau [NACHNAME]
+
+Mit grossem Interesse verfolgen wir die Entwicklung des [PROJEKTNAME]. Insbesondere [PROJEKTSPEZIFISCHER ASPEKT] macht das Projekt aus Sicht der AV- und Kontrollraumplanung ausserordentlich spannend.
+
+Als unabhängiges Schweizer Fachplanungsbüro für audiovisuelle Systeme unterstützen wir Bauherrschaften und Planungsteams bei der Konzeption, Ausschreibung und Realisierung von anspruchsvollen AV-, Leitstellen- und Visualisierungslösungen. Unsere Leistungen umfassen unter anderem:
+
+- Kontrollräume und Operation Center
+- Videowall- und Visualisierungssysteme
+- KVM- und Monitoringlösungen
+- Konferenz- und Schulungsräume
+- Auditorien und hybride Arbeitswelten
+- Digital Signage und Besucherzentren
+
+Aktuell begleiten wir unter anderem Projekte für Universitäten, Labore, Verwaltungsgebäude, Leitstellen und Grossunternehmen in der Schweiz. SBB Energie Leitstelle als ein Beispiel.
+
+Sollten für das [PROJEKTNAME] entsprechende Anforderungen bestehen oder zukünftig entstehen, würden wir uns freuen, unsere Erfahrung in einem unverbindlichen Gespräch vorzustellen und mögliche Unterstützungsmöglichkeiten aufzuzeigen.
+
+Gerne senden wir Ihnen auf Wunsch auch eine Auswahl vergleichbarer Referenzprojekte zu.
+
+Freundliche Grüsse`;
+  }
+  if (bereich === 'Corporate AV') {
+    return `Sehr geehrte/r Herr/Frau [NACHNAME]
+
+Mit grossem Interesse habe ich vom geplanten [PROJEKTNAME] erfahren. Als erfahrener AV-Planer und mit einer Leidenschaft für innovative audiovisuelle Lösungen möchten wir uns hiermit für die Mitwirkung an diesem spannenden Projekt bewerben.
+
+In unserer Tätigkeit bei Intelliconcept AG haben wir bereits zahlreiche anspruchsvolle Projekte erfolgreich begleitet. Aktuell planen wir unter anderem die audiovisuellen Systeme für das Verwaltungsgebäude Luzern am Seetalplatz (Kantonale Verwaltung am Seetalplatz KVSE). Dabei stellen wir sicher, dass die AV-Lösungen nicht nur die aktuellen technischen Standards erfüllen, sondern auch zukunftssicher, nachhaltig und nutzerfreundlich sind.
+
+Unsere Leistungen umfassen die Entwicklung massgeschneiderter Konzepte für Meetingräume über Konferenzräume bis hin zu Auditorien, die Koordination mit interdisziplinären Teams sowie die Sicherstellung einer termingerechten und budgetkonformen Umsetzung. Wir sind überzeugt, dass wir mit unserem Know-how und unserer Erfahrung einen wertvollen Beitrag zum Erfolg Ihres Projekts leisten können.
+
+Ich würde mich freuen, Sie in einem persönlichen Gespräch von unseren Qualifikationen und unserer Begeisterung für Ihr Vorhaben zu überzeugen.
+
+Sollte die Planung der AV-Anlagen nicht im Bereich des Generalplaner-Teams liegen, dürfte ich sie darum bitten, mir eine zuständige Person seitens Bauherrschaft oder Bauherrenvertretung zu nennen?
+
+Liebe Grüsse`;
+  }
+  if (bereich === 'Bildung') {
+    return `Sehr geehrte/r Herr/Frau [NACHNAME]
+
+Ich bin durch [QUELLE/KONTEXT] auf Sie aufmerksam geworden und erlaube mir, mich kurz vorzustellen.
+
+Intelliconcept AG ist ein unabhängiges AV-Fachplanungsbüro und betreut unter anderem die Universität Bern im Rahmen eines Rahmenvertrags als AV-Fachplaner. In dieser Funktion sind wir für die Planung der audiovisuellen Anlagen in sämtlichen Räumlichkeiten der Universität zuständig — von Seminar- und Laborräumen über Aulas und Auditorien bis hin zu Besprechungsräumen sowie hybriden Kommunikationssystemen und Digital-Signage-Lösungen.
+
+Im Hinblick auf [PROJEKTNAME] könnte unser Angebot für die [INSTITUTION] interessant sein.
+
+Unsere Leistungen umfassen die gesamte Planungskette:
+– Bedarfsanalyse und Konzeption
+– Ausschreibung und Angebotsbewertung
+– Fachbauleitung und Qualitätssicherung während der Ausführung
+
+Ein vergleichbares Mandat führen wir bereits für die Berner Fachhochschule (BFH) aus — sowohl am Campus Bern als auch am Campus Biel.
+
+Ich würde mich freuen, Ihnen unser Leistungsangebot in einem kurzen Gespräch näherzubringen und zu erfahren, ob für [INSTITUTION] entsprechender Bedarf besteht.
+
+Liebe Grüsse`;
+  }
+  return `Sehr geehrte/r Herr/Frau [NACHNAME]\n\n[Mail-Entwurf für ${bereich}]\n\nLiebe Grüsse`;
+}
+
+function getMailVorlageText(bereich) {
+  return `[Mail-Entwurf basierend auf Vorlage für ${bereich}, personalisiert mit Top-Kontakt]`;
+}
+
+async function generateMailOnly(item) {
+  const r = item.recherche;
+  const topContact = (r.priorisierteKontakte || [])[0];
+  const prompt = `Generiere einen Mail-Entwurf für die AV-Akquise von Intelliconcept AG.
+
+PROJEKT: ${item.titel}
+BEREICH: ${item.bereich}
+EMPFÄNGER: ${topContact ? JSON.stringify(topContact) : 'Unbekannt'}
+PROJEKT-KONTEXT: ${r.zusammenfassung || ''}
+AV-RELEVANZ: ${r.avRelevanz || ''}
+
+VORLAGE:
+${getMailVorlage(item.bereich)}
+
+Personalisiere die Vorlage mit konkreten Bezügen zum Projekt und passe die Anrede an. KEINE Signatur, kein Name am Ende — Schluss mit "Liebe Grüsse" oder "Freundliche Grüsse" + Leerzeile.
+
+Antworte als JSON: {"betreff": "...", "text": "..."}`;
+
+  const response = await callClaude(prompt);
+  return parseJsonFromResponse(response);
+}
+
+async function callClaude(prompt) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'x-api-key': state.apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
+      'content-type': 'application/json'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 8000,
+      tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 10 }],
+      messages: [{ role: 'user', content: prompt }]
+    })
+  });
+  if (!res.ok) {
+    const txt = await res.text();
+    throw new Error(`Claude API ${res.status}: ${txt}`);
+  }
+  const data = await res.json();
+  // Extract text from all text blocks
+  return data.content.filter(b => b.type === 'text').map(b => b.text).join('\n');
+}
+
+function parseResearchResponse(text) {
+  return parseJsonFromResponse(text);
+}
+
+function parseJsonFromResponse(text) {
+  // Find JSON block
+  let json = text.trim();
+  // Strip ```json fences if present
+  json = json.replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/```\s*$/, '');
+  // Find first { and last }
+  const start = json.indexOf('{');
+  const end = json.lastIndexOf('}');
+  if (start === -1 || end === -1) throw new Error('Kein JSON in Antwort gefunden');
+  json = json.substring(start, end + 1);
+  try {
+    return JSON.parse(json);
+  } catch (e) {
+    console.error('JSON Parse Error:', e, json);
+    throw new Error('JSON parsing failed: ' + e.message);
+  }
+}
+
+// ============================================================
+// LIST UPDATES (Status only)
+// ============================================================
+async function updateListStatus(listItemId, status) {
+  const fieldName = state.fieldMap['Status'] || 'Status';
+  const body = { [fieldName]: status };
+  const res = await fetch(`https://graph.microsoft.com/v1.0/sites/${state.siteId}/lists/${state.listId}/items/${listItemId}/fields`, {
+    method: 'PATCH',
+    headers: {
+      'Authorization': `Bearer ${state.token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) {
+    const txt = await res.text();
+    console.error('Status update failed:', txt);
+    throw new Error('Status-Update fehlgeschlagen: ' + txt);
+  }
+}
+
+async function saveListFields(listItemId) {
+  const item = state.items.find(i => i.listItemId === listItemId);
+  if (!item) return;
+  const weitereInfos = document.getElementById('fld_weitereInfos').value;
+  const bemerkungen = document.getElementById('fld_bemerkungen').value;
+  const body = {};
+  if (state.fieldMap['Weitere Infos']) body[state.fieldMap['Weitere Infos']] = weitereInfos;
+  if (state.fieldMap['Bemerkungen']) body[state.fieldMap['Bemerkungen']] = bemerkungen;
+  try {
+    const res = await fetch(`https://graph.microsoft.com/v1.0/sites/${state.siteId}/lists/${state.listId}/items/${listItemId}/fields`, {
+      method: 'PATCH',
+      headers: { 'Authorization': `Bearer ${state.token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) throw new Error(await res.text());
+    item.weitereInfos = weitereInfos;
+    item.bemerkungen = bemerkungen;
+    showToast('Gespeichert', 'success');
+  } catch (e) {
+    showToast('Speichern fehlgeschlagen: ' + e.message, 'error');
+  }
+}
+
+async function saveMailDraft(listItemId) {
+  const item = state.items.find(i => i.listItemId === listItemId);
+  if (!item || !item.recherche) return;
+  const txt = document.getElementById('fld_mailEntwurf').value;
+  const betreff = document.getElementById('fld_mailBetreff')?.value || item.recherche.mailBetreff;
+  item.recherche.mailEntwurf = txt;
+  item.recherche.mailBetreff = betreff;
+  state.rechercheData[listItemId] = item.recherche;
+  try {
+    await saveJsonData();
+    showToast('Mail gespeichert', 'success');
+  } catch (e) {
+    showToast('Speichern fehlgeschlagen', 'error');
+  }
+}
+
+function copyMail() {
+  const betreff = document.getElementById('fld_mailBetreff')?.value || '';
+  const text = document.getElementById('fld_mailEntwurf').value;
+  const full = betreff ? `Betreff: ${betreff}\n\n${text}` : text;
+  navigator.clipboard.writeText(full).then(() => showToast('In Zwischenablage kopiert', 'success'));
+}
+
+async function markSent(listItemId) {
+  const item = state.items.find(i => i.listItemId === listItemId);
+  if (!item) return;
+  try {
+    await updateListStatus(listItemId, 'Gesendet');
+    item.status = 'Gesendet';
+    render();
+    if (state.selectedId === listItemId) renderPanel();
+    showToast('Als gesendet markiert', 'success');
+  } catch (e) {
+    showToast('Fehler: ' + e.message, 'error');
+  }
+}
+
+async function markLost(listItemId) {
+  if (!confirm('Wirklich als verloren markieren?')) return;
+  const item = state.items.find(i => i.listItemId === listItemId);
+  if (!item) return;
+  try {
+    await updateListStatus(listItemId, 'Verloren');
+    item.status = 'Verloren';
+    render();
+    closePanel();
+    showToast('Als verloren markiert', 'success');
+  } catch (e) {
+    showToast('Fehler: ' + e.message, 'error');
+  }
+}
+
+async function resetStatus(listItemId) {
+  if (!confirm('Status zurück auf "Neu" setzen?')) return;
+  const item = state.items.find(i => i.listItemId === listItemId);
+  if (!item) return;
+  try {
+    await updateListStatus(listItemId, 'Neu');
+    item.status = 'Neu';
+    render();
+    if (state.selectedId === listItemId) renderPanel();
+    showToast('Auf "Neu" zurückgesetzt', 'success');
+  } catch (e) {
+    showToast('Fehler: ' + e.message, 'error');
+  }
+}
+
+// ============================================================
+// BATCH PROCESSING
+// ============================================================
+async function processAllNew() {
+  if (state.processing) {
+    showToast('Verarbeitung läuft bereits', 'error');
+    return;
+  }
+  const queue = state.items.filter(i => i.status === 'Neu');
+  if (!queue.length) {
+    showToast('Keine "Neu"-Einträge zum Verarbeiten');
+    return;
+  }
+  if (!confirm(`${queue.length} Einträge mit Status "Neu" verarbeiten? Dies kann mehrere Minuten dauern.`)) return;
+
+  state.processing = true;
+  const progress = document.getElementById('progressBar');
+  progress.style.display = 'block';
+  progress.className = 'progress';
+
+  let done = 0;
+  for (const item of queue) {
+    done++;
+    progress.textContent = `${done}/${queue.length}: ${item.titel}`;
+    try {
+      await researchItem(item.listItemId);
+    } catch (e) {
+      console.error('Failed for', item.titel, e);
+    }
+    // Brief pause to avoid rate limits
+    await new Promise(r => setTimeout(r, 1500));
+  }
+
+  state.processing = false;
+  progress.style.display = 'none';
+  showToast(`${done} Einträge verarbeitet`, 'success');
+}
+
+// ============================================================
+// UTILS
+// ============================================================
+function escapeHtml(s) {
+  if (s === null || s === undefined) return '';
+  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function showToast(msg, type) {
+  const c = document.getElementById('toastContainer');
+  const div = document.createElement('div');
+  div.className = 'toast' + (type ? ' ' + type : '');
+  div.innerHTML = msg;
+  c.appendChild(div);
+  setTimeout(() => div.remove(), 4000);
+}
+
+function saveApiKey() {
+  const val = document.getElementById('apiKeyInput').value.trim();
+  if (!val.startsWith('sk-ant-')) {
+    showToast('Ungültiger API-Key', 'error');
+    return;
+  }
+  localStorage.setItem('akquise_api_key', val);
+  state.apiKey = val;
+  document.getElementById('apiKeyBar').classList.add('ok');
+  document.getElementById('apiKeyBar').innerHTML = '✓ API-Key gespeichert <button class="small secondary" onclick="resetApiKey()">Ändern</button>';
+  showToast('API-Key gespeichert', 'success');
+}
+
+function resetApiKey() {
+  localStorage.removeItem('akquise_api_key');
+  state.apiKey = null;
+  location.reload();
+}
+
+// ============================================================
+// INIT
+// ============================================================
+async function init() {
+  // Try to parse token from URL hash (after OAuth redirect)
+  const tokenFromHash = parseTokenFromHash();
+  const token = tokenFromHash || getStoredToken();
+
+  if (!token) {
+    document.getElementById('loginScreen').style.display = 'block';
+    document.getElementById('mainApp').style.display = 'none';
+    return;
+  }
+
+  state.token = token;
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('mainApp').style.display = 'block';
+
+  // Load API key
+  const savedKey = localStorage.getItem('akquise_api_key');
+  if (savedKey) {
+    state.apiKey = savedKey;
+    document.getElementById('apiKeyBar').classList.add('ok');
+    document.getElementById('apiKeyBar').innerHTML = '✓ API-Key gespeichert <button class="small secondary" onclick="resetApiKey()">Ändern</button>';
+  }
+
+  try {
+    await getUserInfo();
+    await loadAll();
+  } catch (e) {
+    console.error(e);
+    if (e.message.includes('401')) {
+      localStorage.removeItem('akquise_token');
+      location.reload();
+    } else {
+      showToast('Init-Fehler: ' + e.message, 'error');
+    }
+  }
+}
+
+init();
+</script>
+
+</body>
+</html>
