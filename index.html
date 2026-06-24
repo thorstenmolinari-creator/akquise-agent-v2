@@ -1135,23 +1135,30 @@ function autoSaveMail(listItemId) {
   }, 1000); // 1 second debounce
 }
 
-function openInOutlook(listItemId) {
+async function openInOutlook(listItemId) {
   const item = state.items.find(i => i.listItemId === listItemId);
   if (!item || !item.recherche) return;
   const textEl = document.getElementById('fld_mailEntwurf');
   const betreffEl = document.getElementById('fld_mailBetreff');
   const body = textEl ? textEl.value : item.recherche.mailEntwurf;
   const subject = betreffEl ? betreffEl.value : (item.recherche.mailBetreff || '');
-  // Find top contact email
   const topContact = (item.recherche.priorisierteKontakte || [])[0];
   const to = topContact && topContact.email ? topContact.email : '';
-  const mailto = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  // Check URL length - mailto has practical limits
-  if (mailto.length > 2000) {
-    showToast('Mail zu lang für direkten Outlook-Aufruf. Bitte "Kopieren" verwenden.', 'error');
+
+  // Step 1: Copy body to clipboard
+  try {
+    await navigator.clipboard.writeText(body);
+  } catch (e) {
+    showToast('Konnte Text nicht in Zwischenablage kopieren: ' + e.message, 'error');
     return;
   }
+
+  // Step 2: Open Outlook with recipient + subject only (short URL, always works)
+  const mailto = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}`;
   window.location.href = mailto;
+
+  // Step 3: Notify user
+  showToast('✓ Mail-Text in Zwischenablage. In Outlook: Ctrl+V im Mail-Body einfügen.', 'success', 7000);
 }
 
 function copyMail() {
@@ -1251,13 +1258,13 @@ function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
-function showToast(msg, type) {
+function showToast(msg, type, duration) {
   const c = document.getElementById('toastContainer');
   const div = document.createElement('div');
   div.className = 'toast' + (type ? ' ' + type : '');
   div.innerHTML = msg;
   c.appendChild(div);
-  setTimeout(() => div.remove(), 4000);
+  setTimeout(() => div.remove(), duration || 4000);
 }
 
 function saveApiKey() {
